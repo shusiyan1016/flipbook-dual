@@ -1,21 +1,15 @@
 // 书本目录
 var ols = [
   {"caption": "封面", "page": "1"},
-  {"caption": "灰页", "page": "2"},
-  {"caption": "扉页", "page": "3"},
-  {"caption": "第 1 节", "page": "4"},
-  {"caption": "第 2 节", "page": "5"},
-  {"caption": "第 3 节", "page": "6"},
-  {"caption": "第 4 节", "page": "7"},
-  {"caption": "第 5 节", "page": "8"},
-  {"caption": "第 6 节", "page": "9"},
-  {"caption": "第 7 节", "page": "10"},
-  {"caption": "第 8 节", "page": "11"},
-  {"caption": "第 9 节", "page": "12"},
-  {"caption": "第 10 节", "page": "13"},
-  {"caption": "第 11 节", "page": "14"},
-  {"caption": "封底", "page": "15"},
-  {"caption": "灰页", "page": "16"},
+  {"caption": "目录", "page": "2"},
+  {"caption": "01 走进隐性设计 —— P1", "page": "3"},
+  {"caption": "02 原研哉是谁 —— P2", "page": "4"},
+  {"caption": "03 空白的理念·案例 —— P3", "page": "5"},
+  {"caption": "04 日常中的隐性设计·案例 —— P5", "page": "6"},
+  {"caption": "05 与原研哉对话 —— P7", "page": "7"},
+  {"caption": "06 你的隐性设计练习 —— P9", "page": "8"},
+  {"caption": "07 隐性设计自评 —— P11", "page": "9"},
+  {"caption": "08 回归显隐共生 —— P12", "page": "10"},
 ];
 
 // 路径配置
@@ -24,4 +18,4 @@ var loadImgpath = "./files/thumb/"
 bookConfig.largePath = loadImgpath
 bookConfig.normalPath = loadImgpath
 bookConfig.thumbPath = loadImgpath
-bookConfig.totalPageCount = ols.length
+bookConfig.totalPageCount = 16
