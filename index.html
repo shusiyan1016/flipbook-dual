@@ -23,6 +23,20 @@ html,body{width:100%;height:100%;overflow:hidden;background:#e8ddd0}
 #iframe-kenya{visibility:hidden;z-index:2}
 #iframe-kenya.active{visibility:visible;z-index:4}
 #hint{position:fixed;bottom:18px;left:0;right:0;z-index:10;text-align:center;font-size:12px;color:rgba(255,255,255,0.35);letter-spacing:3px;pointer-events:none;text-shadow:0 1px 4px rgba(0,0,0,0.2)}
+/* --- 侧边栏目录 --- */
+#toc-toggle{position:fixed;left:0;top:50%;z-index:50;transform:translateY(-50%);width:28px;height:60px;background:rgba(0,0,0,0.45);border:none;border-radius:0 8px 8px 0;color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .3s;line-height:1}
+#toc-toggle:hover{background:rgba(0,0,0,0.65)}
+#toc-toggle span{writing-mode:vertical-lr;letter-spacing:3px;font-size:12px}
+#toc-sidebar{position:fixed;left:-320px;top:0;bottom:0;z-index:60;width:300px;background:rgba(20,20,20,0.92);color:#ddd;overflow-y:auto;transition:left .35s ease;backdrop-filter:blur(8px);padding:20px 0}
+#toc-sidebar.open{left:0}
+#toc-sidebar .toc-close{position:absolute;top:10px;right:12px;font-size:20px;cursor:pointer;color:#999;border:none;background:none;line-height:1}
+#toc-sidebar .toc-close:hover{color:#fff}
+#toc-sidebar h2{font-size:14px;font-weight:400;letter-spacing:2px;padding:16px 24px 8px;color:rgba(255,255,255,0.35);border-bottom:1px solid rgba(255,255,255,0.08);margin:0}
+#toc-sidebar .part-title{padding:18px 24px 6px;font-size:12px;font-weight:600;letter-spacing:3px;color:rgba(255,255,255,0.5)}
+#toc-sidebar .toc-item{display:block;padding:7px 24px;font-size:13px;color:#bbb;cursor:pointer;transition:background .2s,color .2s;border-left:3px solid transparent;text-decoration:none}
+#toc-sidebar .toc-item:hover{background:rgba(255,255,255,0.08);color:#fff;border-left-color:rgba(255,255,255,0.3)}
+#toc-overlay{position:fixed;inset:0;z-index:55;background:rgba(0,0,0,0.3);display:none}
+#toc-overlay.show{display:block}
 </style>
 </head>
 <body>
@@ -31,6 +45,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:#e8ddd0}
 <div id="hint">双指放大 · 点击翻阅</div>
 <iframe id="iframe-donald" src="./donald/index.html"></iframe>
 <iframe id="iframe-kenya" src="./kenya/index.html"></iframe>
+
+<button id="toc-toggle"><span>目录</span></button>
+<div id="toc-overlay"></div>
+<nav id="toc-sidebar"><button class="toc-close">✕</button></nav>
 
 <script>
 var MODE_A=0,MODE_B=1,currentMode=MODE_A,A_LAST=13,B_LAST=16,B_FIRST=1,busy=false;
@@ -97,6 +115,57 @@ var t=setInterval(function(){
   if(r.a&&r.b){clearInterval(t);document.getElementById('load').classList.add('hide');setTimeout(function(){install();poll();console.log('OK');},600);}
 },200);
 setTimeout(function(){var e=document.getElementById('load');if(e&&!e.classList.contains('hide')){e.classList.add('hide');setTimeout(function(){install();poll()},600)}},10000);
+
+// --- 侧边栏目录 ---
+var tocData=[
+  {name:"第一部分 显性设计",book:MODE_A,color:"#e8ddd0",pages:[
+    {c:"封面",p:1},{c:"目录",p:2},
+    {c:"01 进入显性设计 —— P1",p:3},{c:"02 唐纳德·诺曼是谁 —— P2",p:4},
+    {c:"03 情感化设计三层次 —— P3",p:5},{c:"04 与诺曼对话 —— P5",p:6},
+    {c:"05 你的设计练习 —— P6",p:7},{c:"06 显性设计自评 —— P8",p:8},
+    {c:"07 转向隐性设计 —— P9",p:9}
+  ]},
+  {name:"第二部分 隐性设计",book:MODE_B,color:"#6a6a6a",pages:[
+    {c:"封面",p:1},{c:"目录",p:2},
+    {c:"01 走进隐性设计 —— P1",p:3},{c:"02 原研哉是谁 —— P2",p:4},
+    {c:"03 空白的理念·案例 —— P3",p:5},{c:"04 日常中的隐性设计·案例 —— P5",p:6},
+    {c:"05 与原研哉对话 —— P7",p:7},{c:"06 你的隐性设计练习 —— P9",p:8},
+    {c:"07 隐性设计自评 —— P11",p:9},{c:"08 回归显隐共生 —— P12",p:10}
+  ]}
+];
+var sidebar=document.getElementById('toc-sidebar');
+var overlay=document.getElementById('toc-overlay');
+var toggle=document.getElementById('toc-toggle');
+function buildTOC(){
+  var h='';
+  tocData.forEach(function(part){
+    h+='<div class="part-title">'+part.name+'</div>';
+    part.pages.forEach(function(item){
+      h+='<a class="toc-item" data-book="'+part.book+'" data-page="'+item.p+'">'+item.c+'</a>';
+    });
+  });
+  sidebar.innerHTML='<button class="toc-close">✕</button>'+h;
+  sidebar.querySelector('.toc-close').onclick=closeTOC;
+  sidebar.querySelectorAll('.toc-item').forEach(function(el){
+    el.onclick=function(){
+      var book=parseInt(el.getAttribute('data-book'));
+      var page=parseInt(el.getAttribute('data-page'));
+      closeTOC();
+      if(busy)return;
+      if(book===currentMode){
+        var w=gw(book===MODE_A?'iframe-donald':'iframe-kenya');
+        if(w&&w.BookInfo)try{w.BookInfo.getBook().gotoPage(page)}catch(e){}
+      }else{
+        switchTo(book,page);
+      }
+    };
+  });
+}
+function openTOC(){sidebar.classList.add('open');overlay.classList.add('show')}
+function closeTOC(){sidebar.classList.remove('open');overlay.classList.remove('show')}
+toggle.onclick=function(e){e.stopPropagation();if(sidebar.classList.contains('open'))closeTOC();else openTOC()};
+overlay.onclick=closeTOC;
+buildTOC();
 </script>
 </body>
 </html>
