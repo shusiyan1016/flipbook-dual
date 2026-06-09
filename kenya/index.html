@@ -19,7 +19,7 @@ html,body{background:transparent!important}
 @keyframes rotP{0%{transform:rotate(0)}50%{transform:rotate(90deg)}70%{transform:rotate(90deg)}100%{transform:rotate(90deg)}}
 .lt{font-size:14px;color:rgba(255,255,255,.55);letter-spacing:4px;animation:fp 1.5s infinite}
 @keyframes fp{0%,100%{opacity:.35}50%{opacity:1}}
-.tableofcontent_form,.search_form{display:none!important}
+.tableofcontent_form,.search_form,.tableofcontent_form *,.form_mask_phone,.form_mask{display:none!important}
 </style>
 </head>
 <body>
@@ -31,5 +31,19 @@ html,body{background:transparent!important}
 <script src="./js/check.js"></script>
 <script src="./js/LoadingJS.js"></script>
 <script>var c=setInterval(function(){if(!window.waitForLoading){clearInterval(c);var e=document.getElementById('load');if(e)e.classList.add('hide')}},200);</script>
+<script>
+!function(){
+  function killTOC(){
+    var els=document.querySelectorAll('.tableofcontent_form,.tableofcontent_form *,.search_form,.form_mask,.form_mask_phone');
+    for(var i=0;i<els.length;i++){var e=els[i];if(e&&e.parentNode)e.parentNode.removeChild(e)}
+    var btns=document.querySelectorAll('[class*="toc" i],[class*="tableofcontent" i],[id*="toc" i],[id*="TOC"],[id*="TableOfContent"]');
+    for(var i=0;i<btns.length;i++){var b=btns[i];if(b&&b.parentNode)b.parentNode.removeChild(b)}
+  }
+  killTOC();
+  var obs=new MutationObserver(function(){killTOC()});
+  obs.observe(document.body,{childList:true,subtree:true,attributes:true});
+  setInterval(killTOC,500);
+}();
+</script>
 </body>
 </html>
