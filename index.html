@@ -142,7 +142,19 @@ function poll(){
   },1000);
 }
 
-// ---- 启动（移除横屏依赖，加载完就显示） ----
+// 关闭目录和搜索面板
+function closePanels(){
+  ['iframe-donald','iframe-kenya'].forEach(function(id){
+    try{
+      var w=gw(id);if(!w)return;
+      ['tableofcontent_form','search_form'].forEach(function(cls){
+        var el=w.document.querySelector('.'+cls);
+        if(el&&el.style.display!=='none'){var cb=el.querySelector('.close');if(cb)cb.click();}
+      });
+    }catch(e){}
+  });
+}
+
 var r={a:false,b:false};
 var t=setInterval(function(){
   var dw=gw('iframe-donald'),kw=gw('iframe-kenya');
@@ -151,11 +163,15 @@ var t=setInterval(function(){
   if(r.a&&r.b){
     clearInterval(t);
     document.getElementById('load').classList.add('hide');
-    setTimeout(function(){install();poll();startPageWatcher();console.log('✅ 启动');},600);
+    setTimeout(function(){
+      install();poll();startPageWatcher();closePanels();
+      setTimeout(closePanels,500);
+      setTimeout(closePanels,1500);
+      console.log('✅ 启动');
+    },600);
   }
 },200);
-// 超时保护：8 秒后强制隐藏 loading
-setTimeout(function(){var e=document.getElementById('load');if(e&&!e.classList.contains('hide')){e.classList.add('hide');setTimeout(function(){install();poll();startPageWatcher()},600)}},8000);
+setTimeout(function(){var e=document.getElementById('load');if(e&&!e.classList.contains('hide')){e.classList.add('hide');setTimeout(function(){install();poll();startPageWatcher();closePanels();setTimeout(closePanels,500);setTimeout(closePanels,1500)},600)}},8000);
 </script>
 </body>
 </html>
