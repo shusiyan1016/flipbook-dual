@@ -64,18 +64,7 @@ var bookConfig = {
   searchPositionJS: "javascript/text_position[%d].js"
 };
 
-shareObj = [{
-  "name": "QQ空间",
-  "url": "http://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=${url}&title=${title}",
-  "logo": "./pdfReader/images/qzone.ico",
-  "title": "QQ空间"
-},
-{
-  "name": "新浪微博",
-  "url": "http://v.t.sina.com.cn/share/share.php?url=${url}&title=${title}",
-  "logo": "./pdfReader/images/sina_weibo.ico",
-  "title": "新浪微博"
-}];
+shareObj = [];
 
 bookConfig.loadingCaptionColor = "#ffffff";
 bookConfig.loadingPicture = "";
@@ -90,7 +79,7 @@ bookConfig.toolbarColor = "#f0ece4";
 bookConfig.iconColor = "#8b7355";
 bookConfig.pageNumColor = "#8b7355";
 bookConfig.iconFontColor = "#ffffff";
-bookConfig.toolbarAlwaysShow = "Yes";
+bookConfig.toolbarAlwaysShow = "No";
 bookConfig.formFontColor = "#ffffff";
 bookConfig.formBackgroundColor = "#27181a";
 bookConfig.buttonsSortXML = [];
@@ -104,7 +93,7 @@ bookConfig.HomeURL = "%first page%";
 bookConfig.aboutButtonVisible = "Hide";
 bookConfig.aboutContactInfoTxt = "";
 bookConfig.enablePageBack = "Hide";
-bookConfig.ShareButtonVisible = "Show";
+bookConfig.ShareButtonVisible = "Hide";
 bookConfig.socialShareSetting = "";
 bookConfig.isInsertFrameLinkEnable = "Show";
 bookConfig.addCurrentPage = "No";
@@ -126,7 +115,7 @@ bookConfig.SelectTextButtonVisible = "Hide";
 bookConfig.SelectTextButtonIcon = "";
 bookConfig.PrintButtonVisible = "Hide";
 bookConfig.printWatermarkFile = "";
-bookConfig.BackgroundSoundButtonVisible = "Show";
+bookConfig.BackgroundSoundButtonVisible = "Hide";
 bookConfig.FlipSound = "No";
 bookConfig.BackgroundSoundURL = "";
 bookConfig.BackgroundSoundLoop = "-1";
@@ -145,7 +134,7 @@ bookConfig.PhoneButtonVisible = "Hide";
 bookConfig.PhoneButtonIcon = "";
 bookConfig.PhoneNumbers = [];
 bookConfig.AnnotationButtonVisible = "Hide";
-bookConfig.FullscreenButtonVisible = "Show";
+bookConfig.FullscreenButtonVisible = "Hide";
 bookConfig.WeChatShareButtonVisible = "Hide";
 bookConfig.WeChatShareButtonIcon = "";
 bookConfig.textClarityEnhancement = "0";
