@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=0.5,maximum-scale=3.0,user-scalable=yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>显隐之间 · 设计的设计</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#e8ddd0}
+
+#load{position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#1a1a1a;color:#fff;transition:opacity 1s,visibility 1s}
+#load.hide{opacity:0;visibility:hidden;pointer-events:none}
+.ph{width:52px;height:88px;border:2.5px solid rgba(255,255,255,.55);border-radius:9px;position:relative;margin-bottom:22px;animation:rotP 2.6s ease-in-out infinite}
+.ph::after{content:'';position:absolute;top:4px;left:4px;right:4px;bottom:14px;background:linear-gradient(135deg,#333,#555);border-radius:3px}
+.ph::before{content:'';position:absolute;bottom:3px;left:50%;transform:translateX(-50%);width:12px;height:3px;border:1.5px solid rgba(255,255,255,.35);border-radius:2px}
+@keyframes rotP{0%{transform:rotate(0)}50%{transform:rotate(90deg)}70%{transform:rotate(90deg)}100%{transform:rotate(90deg)}}
+.lt{font-size:14px;color:rgba(255,255,255,.55);letter-spacing:4px;animation:fp 1.5s infinite}
+@keyframes fp{0%,100%{opacity:.35}50%{opacity:1}}
+
+/* 背景层 */
+#bg-layer{position:fixed;inset:0;z-index:0;background-color:#e8ddd0;transition:background-color 1.2s ease}
+
+/* 粒子容器 */
+#particles{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:0;transition:opacity 0.3s ease}
+#particles.show{opacity:1}
+
+.p-dot{
+  position:absolute;
+  border-radius:50%;
+  width:10px;height:10px;
+  opacity:0;
+  animation:particleBurst 1.5s ease-out forwards;
+}
+
+/* 灰色粒子（A→B） */
+.p-dot.gray{
+  background:rgba(160,160,160,0.7);
+  box-shadow:0 0 8px rgba(160,160,160,0.4);
+}
+
+/* 暖色粒子（B→A） */
+.p-dot.warm{
+  background:rgba(232,221,208,0.8);
+  box-shadow:0 0 8px rgba(232,221,208,0.5);
+}
+
+@keyframes particleBurst{
+  0%{opacity:0;transform:scale(0.2) translate(0,0)}
+  20%{opacity:1;transform:scale(1.2) translate(0,0)}
+  100%{opacity:0;transform:scale(0.1) translate(var(--dx),var(--dy))}
+}
+
+/* iframe 淡入淡出 */
+#iframe-donald,#iframe-kenya{
+  position:fixed;top:0;left:0;width:100%;height:100%;border:none;z-index:2;
+  opacity:1;transition:opacity 0.5s ease;
+}
+#iframe-donald{visibility:visible;z-index:3;opacity:1}
+#iframe-donald.hidden{opacity:0;visibility:visible;pointer-events:none}
+#iframe-kenya{visibility:hidden;z-index:2;opacity:0;pointer-events:none}
+#iframe-kenya.active{visibility:visible;z-index:4;opacity:1;pointer-events:auto}
+
+/* 底部提示 */
+#hint{
+  position:fixed;bottom:18px;left:0;right:0;
+  z-index:10;text-align:center;
+  font-size:12px;color:rgba(255,255,255,0.4);
+  letter-spacing:3px;
+  pointer-events:none;
+  text-shadow:0 1px 4px rgba(0,0,0,0.2);
+  font-family:"PingFang SC","Microsoft YaHei",sans-serif;
+}
+</style>
+</head>
+<body>
+<div id="bg-layer"></div>
+<div id="particles"></div>
+<div id="load"><div class="ph"></div><div class="lt">请横屏观看</div></div>
+<div id="hint">双指放大 · 点击翻阅</div>
+<iframe id="iframe-donald" src="./donald/index.html"></iframe>
+<iframe id="iframe-kenya" src="./kenya/index.html"></iframe>
+
+<script>
+var MODE_A=0,MODE_B=1,currentMode=MODE_A,A_LAST=13,B_LAST=15,B_FIRST=1,busy=false;
+var B_LAST_TRIGGER = 14; // B 册翻到第 15 页时预变色（第 16 页已是唐纳德封面）
+function gw(id){try{return document.getElementById(id).contentWindow}catch(e){return null}}
+
+// ---- 粒子爆发（明显版） ----
+function burstParticles(toGray){
+  var p=document.getElementById('particles');
+  p.innerHTML='';
+  p.className='show';
+  
+  var w=window.innerWidth,h=window.innerHeight;
+  var count=48;
+  
+  for(var i=0;i<count;i++){
+    var dot=document.createElement('div');
+    var size=6+Math.random()*14;
+    dot.className='p-dot '+(toGray?'gray':'warm');
+    dot.style.width=size+'px';
+    dot.style.height=size+'px';
+    dot.style.left=(5+Math.random()*90)+'%';
+    dot.style.top=(5+Math.random()*90)+'%';
+    dot.style.setProperty('--dx',(-200+Math.random()*400)+'px');
+    dot.style.setProperty('--dy',(-200+Math.random()*400)+'px');
+    dot.style.animationDelay=(Math.random()*0.4)+'s';
+    dot.style.animationDuration=(0.8+Math.random()*0.8)+'s';
+    p.appendChild(dot);
+  }
+  
+  setTimeout(function(){p.classList.remove('show')},2200);
+}
+
+// ---- 主切换 ----
+function switchTo(mode,page){
+  if(busy)return;busy=true;
+  
+  var toGray=(mode===MODE_B);
+  burstParticles(toGray);
+  
+  // 背景色立即开始过渡
+  var bg=document.getElementById('bg-layer');
+  if(mode===MODE_A){
+    bg.style.backgroundColor='#e8ddd0';
+  }else{
+    bg.style.backgroundColor='#6a6a6a';
+  }
+  
+  setTimeout(function(){
+    if(mode===MODE_A){
+      document.getElementById('iframe-donald').classList.remove('hidden');
+      document.getElementById('iframe-kenya').classList.remove('active');
+      currentMode=MODE_A;
+      setTimeout(function(){var w=gw('iframe-donald');if(w&&w.BookInfo)try{w.BookInfo.getBook().gotoPage(page)}catch(e){}},200);
+    }else{
+      document.getElementById('iframe-kenya').classList.add('active');
+      document.getElementById('iframe-donald').classList.add('hidden');
+      currentMode=MODE_B;
+      setTimeout(function(){var w=gw('iframe-kenya');if(w&&w.BookInfo)try{w.BookInfo.getBook().gotoPage(page)}catch(e){}},200);
+    }
+  },300);
+  
+  setTimeout(function(){busy=false},1200);
+}
+
+// ---- 轮询：B 册翻到第 15 页就预变色 ----
+var preWarmCooldown=0;
+function startPageWatcher(){
+  setInterval(function(){
+    if(busy)return;
+    try{
+      if(currentMode===MODE_B){
+        var w=gw('iframe-kenya');
+        if(!w||!w.BookInfo)return;
+        var p=w.BookInfo.getCurrentPages();
+        if(!p||!p.length)return;
+        var mx=Math.max.apply(null,p);
+        
+        if(mx>=B_LAST_TRIGGER && Date.now()-preWarmCooldown>3000){
+          preWarmCooldown=Date.now();
+          var bg=document.getElementById('bg-layer');
+          var cur=bg.style.backgroundColor;
+          if(cur!=='rgb(232, 221, 208)'&&cur!=='#e8ddd0'){
+            bg.style.backgroundColor='#e8ddd0';
+            burstParticles(false);
+          }
+        }
+      }
+    }catch(e){}
+  },500);
+}
+
+// ---- 边界拦截 ----
+function install(){
+  [{f:'iframe-donald',m:MODE_A,l:A_LAST,nM:MODE_B,nP:B_FIRST,pP:B_LAST},
+   {f:'iframe-kenya',m:MODE_B,l:B_LAST,nM:MODE_A,nP:1,pP:A_LAST}].forEach(function(c){
+    (function ts(){
+      var w=gw(c.f);if(!w||!w.document||!w.BookInfo){setTimeout(ts,400);return}
+      var h=function(e){
+        if(currentMode!==c.m||busy)return;
+        var x=e.clientX;if(x===void 0&&e.touches)x=e.touches[0].clientX;if(x===void 0)return;
+        try{
+          var p=w.BookInfo.getCurrentPages();if(!p||!p.length)return;
+          var mx=Math.max.apply(null,p),mn=Math.min.apply(null,p);
+          var r=x>(w.innerWidth||document.documentElement.clientWidth)*0.5;
+          if(mx>=c.l&&r){e.preventDefault();e.stopPropagation();switchTo(c.nM,c.nP)}
+          else if(mn<=1&&!r){e.preventDefault();e.stopPropagation();switchTo(c.nM,c.pP)}
+        }catch(ex){}
+      };
+      w.document.addEventListener('mousedown',h,{capture:true});
+      w.document.addEventListener('touchstart',h,{capture:true,passive:false});
+      console.log('✅',c.f);
+    })();
+  });
+}
+
+// ---- 轮询兜底 ----
+function poll(){
+  var st=0;
+  setInterval(function(){
+    if(busy){st=0;return}
+    try{
+      var w=currentMode===MODE_A?gw('iframe-donald'):gw('iframe-kenya');
+      if(!w||!w.BookInfo)return;
+      var p=w.BookInfo.getCurrentPages();if(!p||!p.length)return;
+      var mx=Math.max.apply(null,p),mn=Math.min.apply(null,p);
+      var at=currentMode===MODE_A?(mx>=A_LAST||mn<=1):(mx>=B_LAST||mn<=1);
+      if(at){if(!st)st=Date.now();else if(Date.now()-st>4000&&!busy){st=0;if(currentMode===MODE_A)switchTo(MODE_B,mx>=A_LAST?B_FIRST:B_LAST);else switchTo(MODE_A,mx>=B_LAST?1:A_LAST)}}
+      else st=0;
+    }catch(e){}
+  },1000);
+}
+
+// ---- 启动 ----
+var r={a:false,b:false};
+var t=setInterval(function(){
+  var dw=gw('iframe-donald'),kw=gw('iframe-kenya');
+  if(dw&&dw.waitForLoading===false)r.a=true;
+  if(kw&&kw.waitForLoading===false)r.b=true;
+  if(r.a&&r.b){clearInterval(t);document.getElementById('load').classList.add('hide');setTimeout(function(){install();poll();startPageWatcher();console.log('✅')},600);}
+},200);
+setTimeout(function(){var e=document.getElementById('load');if(e&&!e.classList.contains('hide')){e.classList.add('hide');setTimeout(function(){install();poll();startPageWatcher()},600)}},12000);
+
+// ---- 双指缩放 ----
+(function(){
+  var lastDist=0,lastScale=1;
+  document.addEventListener('touchstart',function(e){
+    if(e.touches.length===2){
+      var dx=e.touches[0].clientX-e.touches[1].clientX;
+      var dy=e.touches[0].clientY-e.touches[1].clientY;
+      lastDist=Math.sqrt(dx*dx+dy*dy);
+    }
+  },{passive:true});
+  document.addEventListener('touchmove',function(e){
+    if(e.touches.length===2){
+      var dx=e.touches[0].clientX-e.touches[1].clientX;
+      var dy=e.touches[0].clientY-e.touches[1].clientY;
+      var dist=Math.sqrt(dx*dx+dy*dy);
+      if(lastDist>0){
+        var scale=dist/lastDist;
+        lastScale=Math.min(Math.max(lastScale*scale,0.5),3);
+        document.body.style.transform='scale('+lastScale+')';
+        document.body.style.transformOrigin='center center';
+      }
+      lastDist=dist;
+    }
+  },{passive:true});
+  document.addEventListener('touchend',function(){
+    lastDist=0;
+  },{passive:true});
+})();
+</script>
+</body>
+</html>
