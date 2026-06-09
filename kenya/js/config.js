@@ -18,7 +18,7 @@ var aliasLanguage = {
 var bookConfig = {
   bookPageStretch: true,
   maxHeightToSmallMode: 360,
-  appName: 'filpPdf',
+  appName: '显隐之间',
   totalPageCount: 0,
   largePageWidth: 2239,
   largePageHeight: 1579,
@@ -28,8 +28,8 @@ var bookConfig = {
   ToolBarsSettings: "",
   TitleBar: "",
   appLogoLinkURL: "",
-  bookTitle: "设计的设计 · 原研哉设计手册",
-  bookDescription: "",
+  bookTitle: "显隐之间",
+  bookDescription: "显隐之间交互阅读",
   ButtonsBar: "",
   ShareButton: "",
 
