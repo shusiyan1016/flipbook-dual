@@ -5,39 +5,11 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=0.5,maximum-scale=3.0,user-scalable=yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>显隐之间 · 设计的设计</title>
-
-<!-- hotcss 移动端适配 -->
-<script>
-!function(w,d){
-  var h={},v=d.querySelector('meta[name="viewport"]'),p=d.querySelector('meta[name="hotcss"]'),r=w.devicePixelRatio||1,m=540,dp=0;
-  r=r>=3?3:(r>=2?2:1);
-  if(p){var c=p.getAttribute('content');
-    if(c){var a=c.match(/initial\-dpr=([\d\.]+)/);if(a)r=parseFloat(a[1]);
-    var b=c.match(/max\-width=([\d\.]+)/);if(b)m=parseFloat(b[1]);
-    var e=c.match(/design\-width=([\d\.]+)/);if(e)dp=parseFloat(e[1]);}}
-  d.documentElement.setAttribute('data-dpr',r);h.dpr=r;
-  d.documentElement.setAttribute('max-width',m);h.maxWidth=m;
-  if(dp){d.documentElement.setAttribute('design-width',dp);h.designWidth=dp;}
-  var s=1/r,ct='width=device-width,initial-scale='+s+',minimum-scale='+s+',maximum-scale='+s+',user-scalable=no';
-  if(v)v.setAttribute('content',ct);else{v=d.createElement('meta');v.setAttribute('name','viewport');v.setAttribute('content',ct);d.head.appendChild(v);}
-  h.px2rem=function(px,dp){if(!dp)dp=parseInt(h.designWidth,10);return parseInt(px,10)*320/dp/20;};
-  h.rem2px=function(rm,dp){if(!dp)dp=parseInt(h.designWidth,10);return rm*20*dp/320;};
-  h.mresize=function(){var iw=d.documentElement.getBoundingClientRect().width||w.innerWidth;
-    if(h.maxWidth&&(iw/h.dpr>h.maxWidth))iw=h.maxWidth*h.dpr;
-    if(!iw)return false;d.documentElement.style.fontSize=(iw*20/320)+'px';h.callback&&h.callback();};
-  h.mresize();
-  w.addEventListener('resize',function(){clearTimeout(h.tid);h.tid=setTimeout(h.mresize,33);},false);
-  w.addEventListener('load',h.mresize,false);
-  setTimeout(function(){h.mresize();},333);
-  w.hotcss=h;
-}(window,document);
-</script>
-
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;overflow:hidden;background:#e8ddd0;font-family:"PingFang SC","Microsoft YaHei",sans-serif}
 
-#load{position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#1a1a1a;color:#fff;transition:opacity 1s,visibility 1s}
+#load{position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#1a1a1a;color:#fff;transition:opacity 0.8s,visibility 0.8s;pointer-events:auto}
 #load.hide{opacity:0;visibility:hidden;pointer-events:none}
 .ph{width:52px;height:88px;border:2.5px solid rgba(255,255,255,.55);border-radius:9px;position:relative;margin-bottom:22px;animation:rotP 2.6s ease-in-out infinite}
 .ph::after{content:'';position:absolute;top:4px;left:4px;right:4px;bottom:14px;background:linear-gradient(135deg,#333,#555);border-radius:3px}
@@ -147,8 +119,7 @@ function startPageWatcher(){
         if(mx>=B_LAST_TRIGGER&&Date.now()-preWarmCooldown>3000){
           preWarmCooldown=Date.now();
           var bg=document.getElementById('bg-layer');
-          var cur=bg.style.backgroundColor;
-          if(cur!=='rgb(232,221,208)'&&cur!=='#e8ddd0'){bg.style.backgroundColor='#e8ddd0';burstParticles(false);}
+          if(bg.style.backgroundColor!=='rgb(232,221,208)'&&bg.style.backgroundColor!=='#e8ddd0'){bg.style.backgroundColor='#e8ddd0';burstParticles(false);}
         }
       }
     }catch(e){}
@@ -171,39 +142,20 @@ function poll(){
   },1000);
 }
 
-// ---- 移动端横屏检测 ----
-(function(){
-  var loadEl=document.getElementById('load');
-  function checkOrientation(){
-    if(window.innerHeight>window.innerWidth){
-      // 竖屏 → 显示 loading
-      if(loadEl)loadEl.classList.remove('hide');
-    }else{
-      // 横屏 → 隐藏 loading（如果两个 iframe 都准备好了）
-      var dw=gw('iframe-donald'),kw=gw('iframe-kenya');
-      if(dw&&dw.waitForLoading===false&&kw&&kw.waitForLoading===false){
-        if(loadEl)loadEl.classList.add('hide');
-      }
-    }
-  }
-  window.addEventListener('orientationchange',function(){setTimeout(checkOrientation,300);});
-  window.addEventListener('resize',function(){setTimeout(checkOrientation,200);});
-  setInterval(checkOrientation,1000);
-})();
-
+// ---- 启动（移除横屏依赖，加载完就显示） ----
 var r={a:false,b:false};
 var t=setInterval(function(){
   var dw=gw('iframe-donald'),kw=gw('iframe-kenya');
   if(dw&&dw.waitForLoading===false)r.a=true;
   if(kw&&kw.waitForLoading===false)r.b=true;
-  // 横屏且都准备好 → 隐藏 loading
-  if(r.a&&r.b&&window.innerWidth>window.innerHeight){
+  if(r.a&&r.b){
     clearInterval(t);
     document.getElementById('load').classList.add('hide');
-    setTimeout(function(){install();poll();startPageWatcher();},600);
+    setTimeout(function(){install();poll();startPageWatcher();console.log('✅ 启动');},600);
   }
 },200);
-setTimeout(function(){var e=document.getElementById('load');if(e&&!e.classList.contains('hide')){e.classList.add('hide');setTimeout(function(){install();poll();startPageWatcher()},600)}},15000);
+// 超时保护：8 秒后强制隐藏 loading
+setTimeout(function(){var e=document.getElementById('load');if(e&&!e.classList.contains('hide')){e.classList.add('hide');setTimeout(function(){install();poll();startPageWatcher()},600)}},8000);
 </script>
 </body>
 </html>
