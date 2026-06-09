@@ -2,33 +2,13 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<!-- hotcss 移动端适配 -->
-<meta name="hotcss" content="initial-dpr=1">
-<script>
-!function(w,d){
-  var h={},v=d.querySelector('meta[name="viewport"]'),p=d.querySelector('meta[name="hotcss"]'),r=w.devicePixelRatio||1,m=540,dp=0;
-  r=r>=3?3:(r>=2?2:1);
-  if(p&&p.getAttribute('content')){var c=p.getAttribute('content'),a=c.match(/initial\-dpr=([\d\.]+)/);if(a)r=parseFloat(a[1]);var b=c.match(/max\-width=([\d\.]+)/);if(b)m=parseFloat(b[1]);var e=c.match(/design\-width=([\d\.]+)/);if(e)dp=parseFloat(e[1]);}
-  d.documentElement.setAttribute('data-dpr',r);h.dpr=r;d.documentElement.setAttribute('max-width',m);h.maxWidth=m;
-  if(dp){d.documentElement.setAttribute('design-width',dp);h.designWidth=dp;}
-  var s=1/r,ct='width=device-width,initial-scale='+s+',minimum-scale='+s+',maximum-scale='+s+',user-scalable=no';
-  if(v)v.setAttribute('content',ct);else{v=d.createElement('meta');v.setAttribute('name','viewport');v.setAttribute('content',ct);d.head.appendChild(v);}
-  h.px2rem=function(px,dp){if(!dp)dp=parseInt(h.designWidth,10);return parseInt(px,10)*320/dp/20;};
-  h.rem2px=function(rm,dp){if(!dp)dp=parseInt(h.designWidth,10);return rm*20*dp/320;};
-  h.mresize=function(){var iw=d.documentElement.getBoundingClientRect().width||w.innerWidth;
-    if(h.maxWidth&&(iw/h.dpr>h.maxWidth))iw=h.maxWidth*h.dpr;
-    if(!iw)return false;d.documentElement.style.fontSize=(iw*20/320)+'px';h.callback&&h.callback();};
-  h.mresize();w.addEventListener('resize',function(){clearTimeout(h.tid);h.tid=setTimeout(h.mresize,33);},false);
-  w.addEventListener('load',h.mresize,false);setTimeout(function(){h.mresize();},333);
-  w.hotcss=h;
-}(window,document);
-</script>
 <title>显隐之间 · 设计的设计</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;overflow:hidden;background:#e8ddd0;font-family:"PingFang SC","Microsoft YaHei",sans-serif}
-#load{position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#1a1a1a;color:#fff;transition:opacity 0.8s,visibility 0.8s;pointer-events:auto}
+#load{position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#1a1a1a;color:#fff;transition:opacity 0.8s,visibility 0.8s}
 #load.hide{opacity:0;visibility:hidden;pointer-events:none}
 .ph{width:52px;height:88px;border:2.5px solid rgba(255,255,255,.55);border-radius:9px;position:relative;margin-bottom:22px;animation:rotP 2.6s ease-in-out infinite}
 .ph::after{content:'';position:absolute;top:4px;left:4px;right:4px;bottom:14px;background:linear-gradient(135deg,#333,#555);border-radius:3px}
@@ -37,11 +17,11 @@ html,body{width:100%;height:100%;overflow:hidden;background:#e8ddd0;font-family:
 .lt{font-size:14px;color:rgba(255,255,255,.55);letter-spacing:4px;animation:fp 1.5s infinite}
 @keyframes fp{0%,100%{opacity:.35}50%{opacity:1}}
 #bg-layer{position:fixed;inset:0;z-index:0;background-color:#e8ddd0;transition:background-color 1s ease}
-#iframe-donald,#iframe-kenya{position:fixed;top:0;left:0;width:100%;height:100%;border:none;z-index:2;transition:opacity 0.5s ease}
-#iframe-donald{visibility:visible;z-index:3;opacity:1}
-#iframe-donald.hidden{opacity:0;visibility:visible;pointer-events:none}
-#iframe-kenya{visibility:hidden;z-index:2;opacity:0;pointer-events:none}
-#iframe-kenya.active{visibility:visible;z-index:4;opacity:1;pointer-events:auto}
+#iframe-donald,#iframe-kenya{position:fixed;top:0;left:0;width:100%;height:100%;border:none;z-index:2}
+#iframe-donald{visibility:visible;z-index:3}
+#iframe-donald.hidden{visibility:hidden}
+#iframe-kenya{visibility:hidden;z-index:2}
+#iframe-kenya.active{visibility:visible;z-index:4}
 #hint{position:fixed;bottom:18px;left:0;right:0;z-index:10;text-align:center;font-size:12px;color:rgba(255,255,255,0.4);letter-spacing:3px;pointer-events:none;text-shadow:0 1px 4px rgba(0,0,0,0.2)}
 </style>
 </head>
@@ -115,27 +95,21 @@ function poll(){
   },1000);
 }
 
-// ---- 横屏检测 + 通知 pdfReader 重新布局 ----
+// ---- 旋转时通知 pdfReader 重新布局 ----
 (function(){
-  function onRotate(){
-    // 通知 hotcss 重新计算
-    if(window.hotcss)window.hotcss.mresize();
-    // 通知两个 iframe 里的 pdfReader 重新布局
+  function relayout(){
     ['iframe-donald','iframe-kenya'].forEach(function(id){
       try{
-        var w=gw(id);if(!w||!w.BookInfo)return;
-        var book=w.BookInfo.getBook();
-        if(book&&book.resizePage)book.resizePage();
-        // 触发布局重算
-        if(w.hotcss)w.hotcss.mresize();
+        var w=gw(id),d=w&&w.document;if(!d)return;
+        var ev=new Event('resize');
+        w.dispatchEvent(ev);
       }catch(e){}
     });
   }
-  window.addEventListener('orientationchange',function(){setTimeout(onRotate,400);});
-  window.addEventListener('resize',function(){setTimeout(onRotate,300);});
+  window.addEventListener('orientationchange',function(){setTimeout(relayout,500);});
+  window.addEventListener('resize',function(){setTimeout(relayout,300);});
 })();
 
-// ---- 启动 ----
 var r={a:false,b:false};
 var t=setInterval(function(){
   var dw=gw('iframe-donald'),kw=gw('iframe-kenya');
